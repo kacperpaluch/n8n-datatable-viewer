@@ -1,0 +1,20 @@
+# Dane użytkownika
+.env
+
+# Zależności (instalowane podczas build)
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+
+# Build output (budowany podczas Docker build)
+frontend/dist/
+backend/public/
+
+# Git i narzędzia deweloperskie
+.git/
+.gitignore
+.dockerignore
+.DS_Store
+
+# Dokumentacja i inne
+*.md

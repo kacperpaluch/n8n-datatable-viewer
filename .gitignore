@@ -1,0 +1,16 @@
+# Dane użytkownika
+.env
+
+# Zależności
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+
+# Build frontendu
+frontend/dist/
+
+# Pliki serwowane przez backend (generowane podczas build)
+backend/public/
+
+# System
+.DS_Store

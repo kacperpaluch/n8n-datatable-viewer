@@ -1,0 +1,9 @@
+services:
+  datatable-viewer:
+    image: kpa90/n8n-datatable-viewer:latest
+    ports:
+      - "3000:3000"
+    environment:
+      N8N_URL: ${N8N_URL}
+      N8N_API_KEY: ${N8N_API_KEY}
+    restart: unless-stopped
