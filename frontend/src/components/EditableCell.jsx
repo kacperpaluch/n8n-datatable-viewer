@@ -103,8 +103,12 @@ export default function EditableCell({ value, type, onChange, disabled }) {
         onKeyDown={handleKeyDown}
         type={inputType}
         title={invalid ? 'Nieprawidłowa liczba' : undefined}
-        className={`w-full min-w-[100px] bg-gray-800 border text-white rounded px-2 py-0.5 text-sm focus:outline-none ${
-          invalid ? 'border-red-500' : 'border-orange-500'
+        className={`w-full min-w-[100px] bg-gray-800 border text-white rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 ${
+          type === 'number' ? 'text-right tabular' : ''
+        } ${
+          invalid
+            ? 'border-red-500 focus:ring-red-500/40'
+            : 'border-orange-500 focus:ring-orange-500/40'
         }`}
       />
     );
@@ -113,14 +117,29 @@ export default function EditableCell({ value, type, onChange, disabled }) {
   return (
     <div
       onClick={() => !disabled && setEditing(true)}
-      title="Kliknij aby edytować"
-      className={`min-h-[22px] rounded px-1 -mx-1 truncate max-w-[280px] ${
+      title={disabled ? undefined : 'Kliknij aby edytować'}
+      className={`group/cell relative min-h-[24px] rounded-md px-1.5 -mx-1.5 py-0.5 truncate max-w-[280px] transition-colors ${
         disabled
           ? 'opacity-40 cursor-not-allowed'
-          : 'cursor-text hover:bg-gray-800 hover:ring-1 hover:ring-gray-600'
+          : 'cursor-text hover:bg-gray-800 hover:ring-1 hover:ring-inset hover:ring-gray-700'
       }`}
     >
       {displayValue ?? <span className="text-gray-600 select-none">—</span>}
+      {!disabled && (
+        <svg
+          className="absolute right-1 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500 opacity-0 group-hover/cell:opacity-100 transition-opacity bg-gray-800 rounded-sm"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+          />
+        </svg>
+      )}
     </div>
   );
 }

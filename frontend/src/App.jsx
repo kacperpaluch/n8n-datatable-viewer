@@ -29,35 +29,47 @@ export default function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
-      <header className="bg-gray-900 border-b border-gray-800 px-6 py-3 flex items-center gap-4 shrink-0">
+    <div className="min-h-screen text-gray-100 flex flex-col">
+      <header className="bg-gray-900/70 backdrop-blur-sm border-b border-gray-800 px-6 py-3 flex items-center gap-4 shrink-0">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 bg-orange-500 rounded-lg flex items-center justify-center">
-            <span className="text-white text-xs font-bold leading-none">n8</span>
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-gradient-to-br from-orange-400 to-orange-600 shadow-sm shadow-orange-900/40 ring-1 ring-inset ring-white/10">
+            <span className="text-white text-xs font-bold leading-none tracking-tight">n8</span>
           </div>
-          <h1 className="text-base font-semibold text-white">DataTable Viewer</h1>
+          <h1 className="text-base font-semibold text-white tracking-tight">
+            DataTable Viewer
+          </h1>
         </div>
 
         <div className="ml-auto flex items-center gap-3">
           {!loading && !error && (
             <>
-              <span className="text-xs text-gray-500">
-                {tables.length} {tables.length === 1 ? 'table' : 'tables'}
+              <span className="text-xs text-gray-500 tabular">
+                {tables.length} {tables.length === 1 ? 'tabela' : 'tabel'}
               </span>
-              <select
-                className="bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 min-w-[260px]"
-                value={selectedTable?.id || ''}
-                onChange={e =>
-                  setSelectedTable(tables.find(t => t.id === e.target.value) || null)
-                }
-              >
-                <option value="">— wybierz DataTable —</option>
-                {tables.map(t => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  className="appearance-none bg-gray-800 border border-gray-700 text-white rounded-lg pl-3 pr-9 py-1.5 text-sm hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors min-w-[260px] cursor-pointer"
+                  value={selectedTable?.id || ''}
+                  onChange={e =>
+                    setSelectedTable(tables.find(t => t.id === e.target.value) || null)
+                  }
+                >
+                  <option value="">— wybierz DataTable —</option>
+                  {tables.map(t => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+                <svg
+                  className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
             </>
           )}
         </div>
@@ -74,37 +86,47 @@ export default function App() {
         )}
 
         {error && (
-          <div className="bg-red-900/30 border border-red-700 rounded-lg p-4 text-red-300 text-sm">
-            <strong className="font-semibold">Błąd połączenia z n8n:</strong> {error}
-            <p className="mt-1 text-red-400/70">
-              Sprawdź zmienne środowiskowe N8N_URL i N8N_API_KEY.
-            </p>
+          <div className="flex items-start gap-3 bg-red-950/40 border border-red-800/60 rounded-lg p-4 text-sm">
+            <svg className="w-5 h-5 shrink-0 text-red-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
+            <div className="text-red-300">
+              <strong className="font-semibold text-red-200">Błąd połączenia z n8n:</strong> {error}
+              <p className="mt-1 text-red-400/70">
+                Sprawdź zmienne środowiskowe N8N_URL i N8N_API_KEY.
+              </p>
+            </div>
           </div>
         )}
 
         {!loading && !error && !selectedTable && (
-          <div className="flex items-center justify-center h-64 text-gray-500">
-            <div className="text-center">
-              <svg
-                className="w-12 h-12 mx-auto mb-3 text-gray-700"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M3 10h18M3 6h18M3 14h18M3 18h18"
-                />
-              </svg>
-              <p className="text-base">Wybierz DataTable z listy powyżej</p>
+          <div className="flex items-center justify-center h-[60vh]">
+            <div className="text-center max-w-sm">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-900 border border-gray-800 flex items-center justify-center">
+                <svg
+                  className="w-8 h-8 text-gray-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M3 10h18M3 6h18M3 14h18M3 18h18"
+                  />
+                </svg>
+              </div>
+              <p className="text-base font-medium text-gray-300">Wybierz DataTable</p>
+              <p className="text-sm text-gray-600 mt-1">
+                Skorzystaj z listy w prawym górnym rogu, aby otworzyć tabelę.
+              </p>
             </div>
           </div>
         )}
 
         {truncated && !loading && !error && (
-          <div className="mb-3 bg-amber-900/30 border border-amber-700 rounded-lg px-3 py-2 text-amber-300 text-xs">
+          <div className="mb-3 bg-amber-950/40 border border-amber-800/60 rounded-lg px-3 py-2 text-amber-300 text-xs">
             Lista tabel została obcięta do {TABLES_LIMIT} pozycji — niektóre tabele mogą nie być widoczne.
           </div>
         )}
