@@ -25,6 +25,8 @@ Prosty interfejs webowy do przeglądania i edytowania DataTable w n8n.
 
 ## Uruchomienie
 
+Obraz dostępny na [Docker Hub](https://hub.docker.com/r/kpa90/n8n-datatable-viewer) — multi-arch (`linux/arm64` + `linux/amd64`).
+
 ```bash
 cp .env.example .env
 # Uzupełnij N8N_URL i N8N_API_KEY w .env

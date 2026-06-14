@@ -1,5 +1,12 @@
 import { useState, useEffect } from 'react';
 import DataTable from './components/DataTable.jsx';
+import {
+  DatabaseIcon,
+  ChevronDownIcon,
+  AlertTriangleIcon,
+  InboxIcon,
+  TableIcon,
+} from './components/icons.jsx';
 
 const TABLES_LIMIT = 250;
 
@@ -9,6 +16,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [truncated, setTruncated] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     fetch(`/n8n-api/data-tables?limit=${TABLES_LIMIT}`)
@@ -28,71 +36,128 @@ export default function App() {
       });
   }, []);
 
-  return (
-    <div className="min-h-screen text-gray-100 flex flex-col">
-      <header className="bg-gray-900/70 backdrop-blur-sm border-b border-gray-800 px-6 py-3 flex items-center gap-4 shrink-0">
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-gradient-to-br from-orange-400 to-orange-600 shadow-sm shadow-orange-900/40 ring-1 ring-inset ring-white/10">
-            <span className="text-white text-xs font-bold leading-none tracking-tight">n8</span>
-          </div>
-          <h1 className="text-base font-semibold text-white tracking-tight">
-            DataTable Viewer
-          </h1>
-        </div>
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
-        <div className="ml-auto flex items-center gap-3">
-          {!loading && !error && (
-            <>
-              <span className="text-xs text-gray-500 tabular">
-                {tables.length} {tables.length === 1 ? 'tabela' : 'tabel'}
+  return (
+    <div
+      className="min-h-screen flex flex-col font-body"
+      style={{ backgroundColor: 'var(--bg-page)', color: 'var(--text-primary)' }}
+    >
+      <header
+        className={`sticky top-0 z-30 bg-white transition-shadow ${
+          scrolled ? 'shadow-header-scroll' : ''
+        }`}
+        style={{ borderBottom: '1px solid var(--border)' }}
+      >
+        <div className="max-w-[1400px] mx-auto px-6 h-16 flex items-center gap-4">
+          <div className="flex items-center gap-2.5">
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{
+                background: 'var(--accent)',
+                boxShadow: '0 2px 6px rgba(94, 168, 50, 0.25)',
+              }}
+            >
+              <DatabaseIcon size={18} className="text-white" strokeWidth={2.25} />
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span
+                className="font-display text-[19px] font-extrabold leading-none"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                DataTable Viewer
               </span>
-              <div className="relative">
-                <select
-                  className="appearance-none bg-gray-800 border border-gray-700 text-white rounded-lg pl-3 pr-9 py-1.5 text-sm hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors min-w-[260px] cursor-pointer"
-                  value={selectedTable?.id || ''}
-                  onChange={e =>
-                    setSelectedTable(tables.find(t => t.id === e.target.value) || null)
-                  }
+              <span
+                className="text-[11px] font-medium uppercase tracking-wider hidden sm:inline"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                for n8n
+              </span>
+            </div>
+          </div>
+
+          <div className="ml-auto flex items-center gap-3">
+            {!loading && !error && (
+              <>
+                <span
+                  className="text-xs tabular hidden md:inline"
+                  style={{ color: 'var(--text-muted)' }}
                 >
-                  <option value="">— wybierz DataTable —</option>
-                  {tables.map(t => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
-                <svg
-                  className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </>
-          )}
+                  {tables.length} {tables.length === 1 ? 'tabela' : 'tabel'}
+                </span>
+                <div className="relative">
+                  <select
+                    className="appearance-none bg-white text-sm font-medium rounded-md pl-3 pr-9 py-2 cursor-pointer transition-all"
+                    style={{
+                      border: '1px solid var(--border)',
+                      color: 'var(--text-primary)',
+                      minWidth: '260px',
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+                    }}
+                    value={selectedTable?.id || ''}
+                    onChange={e =>
+                      setSelectedTable(tables.find(t => t.id === e.target.value) || null)
+                    }
+                    onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
+                    onBlur={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+                  >
+                    <option value="">— wybierz DataTable —</option>
+                    {tables.map(t => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDownIcon
+                    size={16}
+                    className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2"
+                    style={{ color: 'var(--text-muted)' }}
+                  />
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </header>
 
-      <main className="flex-1 p-6 overflow-hidden">
+      <main className="flex-1 px-6 py-6 max-w-[1400px] w-full mx-auto overflow-hidden">
         {loading && (
-          <div className="flex items-center justify-center h-64 text-gray-400">
+          <div
+            className="flex items-center justify-center h-64"
+            style={{ color: 'var(--text-muted)' }}
+          >
             <div className="text-center">
-              <div className="animate-spin w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full mx-auto mb-3" />
-              <p className="text-sm">Ładowanie tabel...</p>
+              <div
+                className="w-8 h-8 border-2 border-t-transparent rounded-full mx-auto mb-3 animate-spin"
+                style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }}
+              />
+              <p className="text-sm">Ładowanie tabel…</p>
             </div>
           </div>
         )}
 
         {error && (
-          <div className="flex items-start gap-3 bg-red-950/40 border border-red-800/60 rounded-lg p-4 text-sm">
-            <svg className="w-5 h-5 shrink-0 text-red-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-            </svg>
-            <div className="text-red-300">
-              <strong className="font-semibold text-red-200">Błąd połączenia z n8n:</strong> {error}
-              <p className="mt-1 text-red-400/70">
+          <div
+            className="flex items-start gap-3 rounded-lg p-4 text-sm"
+            style={{
+              background: '#fef2f2',
+              border: '1px solid #fecaca',
+              color: '#991b1b',
+            }}
+          >
+            <AlertTriangleIcon
+              size={20}
+              className="shrink-0 mt-0.5"
+              style={{ color: '#dc2626' }}
+            />
+            <div>
+              <strong className="font-semibold">Błąd połączenia z n8n:</strong> {error}
+              <p className="mt-1" style={{ color: '#b91c1c' }}>
                 Sprawdź zmienne środowiskowe N8N_URL i N8N_API_KEY.
               </p>
             </div>
@@ -102,32 +167,45 @@ export default function App() {
         {!loading && !error && !selectedTable && (
           <div className="flex items-center justify-center h-[60vh]">
             <div className="text-center max-w-sm">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-900 border border-gray-800 flex items-center justify-center">
-                <svg
-                  className="w-8 h-8 text-gray-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M3 10h18M3 6h18M3 14h18M3 18h18"
-                  />
-                </svg>
+              <div
+                className="w-16 h-16 mx-auto mb-5 rounded-2xl flex items-center justify-center"
+                style={{
+                  background: 'var(--accent-light)',
+                  border: '1px solid var(--border)',
+                }}
+              >
+                <TableIcon
+                  size={28}
+                  strokeWidth={1.5}
+                  style={{ color: 'var(--accent)' }}
+                />
               </div>
-              <p className="text-base font-medium text-gray-300">Wybierz DataTable</p>
-              <p className="text-sm text-gray-600 mt-1">
-                Skorzystaj z listy w prawym górnym rogu, aby otworzyć tabelę.
+              <h2
+                className="font-display text-2xl font-bold mb-2"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                Wybierz DataTable
+              </h2>
+              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                Skorzystaj z listy w prawym górnym rogu, aby otworzyć tabelę i
+                przeglądać lub edytować wiersze.
               </p>
             </div>
           </div>
         )}
 
         {truncated && !loading && !error && (
-          <div className="mb-3 bg-amber-950/40 border border-amber-800/60 rounded-lg px-3 py-2 text-amber-300 text-xs">
-            Lista tabel została obcięta do {TABLES_LIMIT} pozycji — niektóre tabele mogą nie być widoczne.
+          <div
+            className="mb-3 rounded-md px-3 py-2 text-xs flex items-start gap-2"
+            style={{
+              background: '#fffbeb',
+              border: '1px solid #fde68a',
+              color: '#92400e',
+            }}
+          >
+            <AlertTriangleIcon size={14} className="shrink-0 mt-0.5" />
+            Lista tabel została obcięta do {TABLES_LIMIT} pozycji — niektóre tabele
+            mogą nie być widoczne.
           </div>
         )}
 

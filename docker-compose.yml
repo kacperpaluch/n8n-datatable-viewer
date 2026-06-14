@@ -4,8 +4,9 @@ services:
     ports:
       - "3000:3000"
     environment:
-      N8N_URL: ${N8N_URL}
-      N8N_API_KEY: ${N8N_API_KEY}
+      - N8N_URL=${N8N_URL}
+      - N8N_API_KEY=${N8N_API_KEY}
+      - TZ=Europe/Warsaw
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/healthz"]

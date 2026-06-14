@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
+import { PencilIcon, ExternalLinkIcon } from './icons.jsx';
 
 export default function EditableCell({ value, type, onChange, disabled }) {
   const [editing, setEditing] = useState(false);
   const [localValue, setLocalValue] = useState(value ?? '');
   const [invalid, setInvalid] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -24,14 +26,17 @@ export default function EditableCell({ value, type, onChange, disabled }) {
         onClick={() => !disabled && onChange(!value)}
         disabled={disabled}
         title={String(value)}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${
-          value ? 'bg-orange-500' : 'bg-gray-600'
-        } ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+        aria-pressed={!!value}
+        className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none"
+        style={{
+          background: value ? 'var(--accent)' : '#d4d4d4',
+          opacity: disabled ? 0.4 : 1,
+          cursor: disabled ? 'not-allowed' : 'pointer',
+        }}
       >
         <span
-          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
-            value ? 'translate-x-[22px]' : 'translate-x-0.5'
-          }`}
+          className="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
+          style={{ transform: value ? 'translateX(18px)' : 'translateX(2px)' }}
         />
       </button>
     );
@@ -48,7 +53,6 @@ export default function EditableCell({ value, type, onChange, disabled }) {
 
     if (type === 'number') {
       if (trimmed === '') {
-        // Wyczyszczenie liczby = brak wartości, a nie 0
         setEditing(false);
         setInvalid(false);
         onChange(null);
@@ -56,7 +60,6 @@ export default function EditableCell({ value, type, onChange, disabled }) {
       }
       const n = Number(trimmed);
       if (Number.isNaN(n)) {
-        // Nieprawidłowa liczba — sygnalizuj błąd zamiast cicho wysyłać starą wartość
         setInvalid(true);
         requestAnimationFrame(() => inputRef.current?.focus());
         return;
@@ -89,8 +92,6 @@ export default function EditableCell({ value, type, onChange, disabled }) {
     typeof value === 'string' &&
     /^https?:\/\//i.test(value.trim());
 
-  // type="date" przyjmuje tylko YYYY-MM-DD i cicho gubi czas/strefę przy datetime.
-  // Picker tylko dla czystych dat; pełne timestampy edytujemy jako tekst (round-trip bez korupcji).
   const isPlainDate = type === 'date' && /^\d{4}-\d{2}-\d{2}$/.test(String(value ?? ''));
   const inputType =
     type === 'number' ? 'number' : type === 'date' && isPlainDate ? 'date' : 'text';
@@ -108,38 +109,53 @@ export default function EditableCell({ value, type, onChange, disabled }) {
         onKeyDown={handleKeyDown}
         type={inputType}
         title={invalid ? 'Nieprawidłowa liczba' : undefined}
-        className={`w-full min-w-[100px] bg-gray-800 border text-white rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 ${
-          type === 'number' ? 'text-right tabular' : ''
-        } ${
-          invalid
-            ? 'border-red-500 focus:ring-red-500/40'
-            : 'border-orange-500 focus:ring-orange-500/40'
-        }`}
+        className="w-full min-w-[100px] rounded-md text-sm focus:outline-none transition-colors"
+        style={{
+          background: '#fff',
+          border: invalid ? '1px solid #dc2626' : '1px solid var(--accent)',
+          color: 'var(--text-primary)',
+          padding: '4px 8px',
+          textAlign: type === 'number' ? 'right' : 'left',
+          boxShadow: invalid
+            ? '0 0 0 3px rgba(220, 38, 38, 0.1)'
+            : '0 0 0 3px var(--accent-light)',
+          fontFamily: 'inherit',
+        }}
       />
     );
   }
 
-  // URL: klik w tekst otwiera link w nowej karcie, edycję uruchamia osobny ołówek.
   if (isUrl) {
     return (
-      <div className="group/cell flex items-center gap-1 min-h-[24px] py-0.5">
+      <div
+        className="flex items-center gap-1 min-h-[24px] py-0.5"
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
         <a
           href={value}
           target="_blank"
           rel="noopener noreferrer"
           title={value}
-          className="truncate min-w-0 flex-1 text-orange-400 hover:text-orange-300 hover:underline transition-colors"
+          className="truncate min-w-0 flex-1 flex items-center gap-1 transition-colors"
+          style={{ color: 'var(--accent)' }}
         >
-          {value}
+          <span className="truncate">{value}</span>
+          <ExternalLinkIcon size={11} className="shrink-0 opacity-60" />
         </a>
         {!disabled && (
           <button
             type="button"
             onClick={() => setEditing(true)}
             title="Edytuj"
-            className="shrink-0 p-0.5 rounded-sm text-gray-500 hover:text-gray-200 hover:bg-gray-800 opacity-0 group-hover/cell:opacity-100 focus:opacity-100 transition-all"
+            className="shrink-0 p-0.5 rounded transition-all"
+            style={{
+              color: 'var(--text-muted)',
+              opacity: hovered ? 1 : 0,
+              background: hovered ? 'var(--bg-muted)' : 'transparent',
+            }}
           >
-            <PencilIcon />
+            <PencilIcon size={11} />
           </button>
         )}
       </div>
@@ -150,31 +166,31 @@ export default function EditableCell({ value, type, onChange, disabled }) {
     <div
       onClick={() => !disabled && setEditing(true)}
       title={disabled ? undefined : displayValue ?? 'Kliknij aby edytować'}
-      className={`group/cell relative min-h-[24px] rounded-md px-1.5 -mx-1.5 py-0.5 truncate transition-colors ${
-        disabled
-          ? 'opacity-40 cursor-not-allowed'
-          : 'cursor-text hover:bg-gray-800 hover:ring-1 hover:ring-inset hover:ring-gray-700'
-      }`}
+      className="group/cell relative min-h-[24px] rounded-md px-1.5 -mx-1.5 py-0.5 truncate transition-colors"
+      style={{
+        cursor: disabled ? 'not-allowed' : 'text',
+        opacity: disabled ? 0.4 : 1,
+        color: 'var(--text-primary)',
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
-      {displayValue ?? <span className="text-gray-600 select-none">—</span>}
+      {displayValue ?? (
+        <span style={{ color: 'var(--text-muted)' }} className="select-none">
+          —
+        </span>
+      )}
       {!disabled && (
-        <span className="absolute right-1 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500 opacity-0 group-hover/cell:opacity-100 transition-opacity bg-gray-800 rounded-sm">
-          <PencilIcon />
+        <span
+          className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center justify-center w-4 h-4 rounded-sm transition-opacity pointer-events-none"
+          style={{
+            color: 'var(--text-muted)',
+            opacity: hovered ? 1 : 0,
+          }}
+        >
+          <PencilIcon size={11} />
         </span>
       )}
     </div>
-  );
-}
-
-function PencilIcon() {
-  return (
-    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-      />
-    </svg>
   );
 }

@@ -8,6 +8,23 @@ import {
   flexRender,
 } from '@tanstack/react-table';
 import EditableCell from './EditableCell.jsx';
+import {
+  RefreshIcon,
+  AlertTriangleIcon,
+  XIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+  ArrowUpDownIcon,
+  SearchIcon,
+  TypeIcon,
+  HashIcon,
+  CalendarIcon,
+  ToggleLeftIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ChevronsLeftIcon,
+  ChevronsRightIcon,
+} from './icons.jsx';
 
 const PAGE_SIZE = 50;
 const MAX_ROWS = 10000;
@@ -94,14 +111,12 @@ export default function DataTable({ table }) {
     [table.columns]
   );
 
-  // Domyślne szerokości kolumn wg typu; kolumny ze stringami wykrytymi jako URL
-  // dostają więcej miejsca, bo adresy są długie. Użytkownik może je dowolnie rozciągnąć.
   const columnSizes = useMemo(() => {
     const sizes = {};
     for (const col of sortedColumns) {
-      if (col.type === 'number') sizes[col.name] = 110;
-      else if (col.type === 'boolean') sizes[col.name] = 90;
-      else if (col.type === 'date') sizes[col.name] = 160;
+      if (col.type === 'number') sizes[col.name] = 120;
+      else if (col.type === 'boolean') sizes[col.name] = 92;
+      else if (col.type === 'date') sizes[col.name] = 170;
       else {
         const sample = rows
           .slice(0, 20)
@@ -110,7 +125,7 @@ export default function DataTable({ table }) {
         const urlish =
           sample.length > 0 &&
           sample.filter(v => /^https?:\/\//i.test(v)).length > sample.length / 2;
-        sizes[col.name] = urlish ? 380 : 200;
+        sizes[col.name] = urlish ? 380 : 220;
       }
     }
     return sizes;
@@ -170,10 +185,16 @@ export default function DataTable({ table }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64 text-gray-400">
+      <div
+        className="flex items-center justify-center h-64"
+        style={{ color: 'var(--text-muted)' }}
+      >
         <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full mx-auto mb-3" />
-          <p className="text-sm">Ładowanie wierszy...</p>
+          <div
+            className="w-8 h-8 border-2 border-t-transparent rounded-full mx-auto mb-3 animate-spin"
+            style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }}
+          />
+          <p className="text-sm">Ładowanie wierszy…</p>
         </div>
       </div>
     );
@@ -181,80 +202,152 @@ export default function DataTable({ table }) {
 
   if (error) {
     return (
-      <div className="flex items-start gap-3 bg-red-950/40 border border-red-800/60 rounded-lg p-4 text-sm">
-        <svg className="w-5 h-5 shrink-0 text-red-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-        </svg>
-        <div className="text-red-300">
-          <strong className="font-semibold text-red-200">Błąd:</strong> {error}
+      <div
+        className="flex items-start gap-3 rounded-lg p-4 text-sm"
+        style={{
+          background: '#fef2f2',
+          border: '1px solid #fecaca',
+          color: '#991b1b',
+        }}
+      >
+        <AlertTriangleIcon
+          size={20}
+          className="shrink-0 mt-0.5"
+          style={{ color: '#dc2626' }}
+        />
+        <div>
+          <strong className="font-semibold">Błąd:</strong> {error}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-3 h-full">
+    <div className="flex flex-col gap-4 h-full">
       {/* Toolbar */}
-      <div className="flex items-center justify-between shrink-0">
-        <div className="flex items-baseline gap-2">
-          <span className="text-sm font-semibold text-white tracking-tight">{table.name}</span>
-          <span className="text-xs text-gray-500 tabular">
+      <div
+        className="flex items-center justify-between shrink-0 rounded-lg px-4 py-3"
+        style={{
+          background: 'var(--bg-page)',
+          border: '1px solid var(--border)',
+        }}
+      >
+        <div className="flex items-baseline gap-2 min-w-0">
+          <span
+            className="font-display text-lg font-bold truncate"
+            style={{ color: 'var(--text-primary)' }}
+          >
+            {table.name}
+          </span>
+          <span
+            className="text-xs tabular shrink-0"
+            style={{ color: 'var(--text-muted)' }}
+          >
             {rows.length.toLocaleString('pl-PL')} wierszy
             {hasActiveFilters && filteredCount !== rows.length && (
-              <span className="text-orange-400 ml-1">
+              <span style={{ color: 'var(--accent)' }} className="ml-1">
                 · {filteredCount.toLocaleString('pl-PL')} po filtrach
               </span>
             )}
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {hasActiveFilters && (
             <button
               onClick={() => setColumnFilters([])}
-              className="text-xs px-2.5 py-1.5 bg-orange-500/15 hover:bg-orange-500/25 text-orange-300 rounded-lg border border-orange-500/30 transition-colors"
+              className="text-xs font-medium px-3 py-1.5 rounded-md transition-colors"
+              style={{
+                background: 'var(--accent-light)',
+                color: 'var(--accent)',
+                border: '1px solid var(--accent-200, #d8eec6)',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = '#e3f1d2')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'var(--accent-light)')}
             >
               Wyczyść filtry
             </button>
           )}
           <button
             onClick={() => fetchRows()}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 active:bg-gray-700/80 text-gray-300 hover:text-white text-xs rounded-lg border border-gray-700 hover:border-gray-600 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all"
+            style={{
+              background: 'var(--text-primary)',
+              color: '#fff',
+              border: '1px solid var(--text-primary)',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.12)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = '';
+              e.currentTarget.style.boxShadow = '';
+            }}
           >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
+            <RefreshIcon size={14} strokeWidth={2} />
             Odśwież
           </button>
         </div>
       </div>
 
       {truncated && (
-        <div className="shrink-0 bg-amber-900/30 border border-amber-700 rounded px-3 py-2 text-amber-300 text-xs">
-          Załadowano pierwsze {MAX_ROWS.toLocaleString('pl-PL')} wierszy — tabela jest większa. Sortowanie i filtry działają tylko na załadowanym zakresie.
+        <div
+          className="shrink-0 rounded-md px-3 py-2 text-xs flex items-start gap-2"
+          style={{
+            background: '#fffbeb',
+            border: '1px solid #fde68a',
+            color: '#92400e',
+          }}
+        >
+          <AlertTriangleIcon size={14} className="shrink-0 mt-0.5" />
+          Załadowano pierwsze {MAX_ROWS.toLocaleString('pl-PL')} wierszy — tabela
+          jest większa. Sortowanie i filtry działają tylko na załadowanym zakresie.
         </div>
       )}
 
       {saveError && (
-        <div className="shrink-0 bg-red-900/30 border border-red-700 rounded px-3 py-2 text-red-300 text-xs flex items-center justify-between">
-          {saveError}
-          <button onClick={() => setSaveError(null)} className="ml-2 text-red-400 hover:text-red-200">
-            ✕
+        <div
+          className="shrink-0 rounded-md px-3 py-2 text-xs flex items-center justify-between"
+          style={{
+            background: '#fef2f2',
+            border: '1px solid #fecaca',
+            color: '#991b1b',
+          }}
+        >
+          <span className="flex items-center gap-2">
+            <AlertTriangleIcon size={14} />
+            {saveError}
+          </span>
+          <button
+            onClick={() => setSaveError(null)}
+            className="ml-2 hover:opacity-70"
+            aria-label="Zamknij"
+          >
+            <XIcon size={14} />
           </button>
         </div>
       )}
 
       {/* Table */}
-      <div className="overflow-auto rounded-lg border border-gray-800 flex-1 bg-gray-950/40">
+      <div
+        className="overflow-auto rounded-lg flex-1"
+        style={{
+          background: 'var(--bg-page)',
+          border: '1px solid var(--border)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        }}
+      >
         <table
           className="text-sm border-collapse table-fixed min-w-full"
           style={{ width: reactTable.getTotalSize() }}
         >
-          <thead className="bg-gray-900 sticky top-0 z-10 shadow-header-scroll">
+          <thead
+            className="sticky top-0 z-10"
+            style={{
+              background: 'var(--bg-page)',
+              borderBottom: '1px solid var(--border)',
+            }}
+          >
             {reactTable.getHeaderGroups().map(hg => (
               <tr key={hg.id}>
                 {hg.headers.map(header => {
@@ -265,17 +358,25 @@ export default function DataTable({ table }) {
                     <th
                       key={header.id}
                       style={{ width: header.getSize() }}
-                      className="relative px-3 py-2 border-b border-gray-800 align-top"
+                      className="relative px-3 py-2.5 align-top"
                     >
                       <button
                         onClick={header.column.getToggleSortingHandler()}
-                        className={`group flex items-center gap-1.5 w-full text-xs font-semibold uppercase tracking-wide transition-colors ${
+                        className={`group flex items-center gap-1.5 w-full text-[11px] font-semibold uppercase tracking-wider transition-colors ${
                           numeric ? 'justify-end flex-row-reverse' : ''
-                        } ${sorted ? 'text-white' : 'text-gray-400 hover:text-gray-200'}`}
+                        }`}
+                        style={{
+                          color: sorted ? 'var(--text-primary)' : 'var(--text-muted)',
+                        }}
                         title="Sortuj"
                       >
                         <TypeBadge type={colType} />
-                        <span className="truncate">
+                        <span
+                          className="truncate"
+                          style={{
+                            color: sorted ? 'var(--text-primary)' : 'var(--text-secondary)',
+                          }}
+                        >
                           {flexRender(header.column.columnDef.header, header.getContext())}
                         </span>
                         <SortIcon dir={sorted} />
@@ -289,11 +390,22 @@ export default function DataTable({ table }) {
                           onTouchStart={header.getResizeHandler()}
                           onClick={e => e.stopPropagation()}
                           title="Przeciągnij, aby zmienić szerokość"
-                          className={`absolute top-0 right-0 h-full w-1.5 cursor-col-resize select-none touch-none transition-colors ${
-                            header.column.getIsResizing()
-                              ? 'bg-orange-500'
-                              : 'bg-transparent hover:bg-orange-500/40'
-                          }`}
+                          className="absolute top-0 right-0 h-full w-1.5 cursor-col-resize select-none touch-none transition-colors"
+                          style={{
+                            backgroundColor: header.column.getIsResizing()
+                              ? 'var(--accent)'
+                              : 'transparent',
+                          }}
+                          onMouseEnter={e => {
+                            if (!header.column.getIsResizing()) {
+                              e.currentTarget.style.backgroundColor = 'var(--accent-light)';
+                            }
+                          }}
+                          onMouseLeave={e => {
+                            if (!header.column.getIsResizing()) {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                            }
+                          }}
                         />
                       )}
                     </th>
@@ -307,7 +419,8 @@ export default function DataTable({ table }) {
               <tr>
                 <td
                   colSpan={columns.length}
-                  className="px-4 py-16 text-center text-gray-600 text-sm"
+                  className="px-4 py-16 text-center text-sm"
+                  style={{ color: 'var(--text-muted)' }}
                 >
                   {hasActiveFilters
                     ? 'Brak wierszy pasujących do filtrów'
@@ -318,9 +431,21 @@ export default function DataTable({ table }) {
               reactTable.getRowModel().rows.map((row, i) => (
                 <tr
                   key={row.id}
-                  className={`border-b border-gray-800/60 hover:bg-gray-800/40 transition-colors ${
-                    i % 2 === 0 ? 'bg-transparent' : 'bg-gray-900/30'
-                  } ${savingRow === row.original.id ? 'opacity-60' : ''}`}
+                  className="transition-colors"
+                  style={{
+                    background: i % 2 === 0 ? '#ffffff' : 'var(--bg-muted)',
+                    borderBottom: '1px solid var(--border)',
+                    opacity: savingRow === row.original.id ? 0.5 : 1,
+                  }}
+                  onMouseEnter={e => {
+                    if (savingRow !== row.original.id) {
+                      e.currentTarget.style.background = 'var(--accent-light)';
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background =
+                      i % 2 === 0 ? '#ffffff' : 'var(--bg-muted)';
+                  }}
                 >
                   {row.getVisibleCells().map(cell => {
                     const numeric = cell.column.columnDef.meta?.type === 'number';
@@ -328,7 +453,7 @@ export default function DataTable({ table }) {
                       <td
                         key={cell.id}
                         style={{ width: cell.column.getSize() }}
-                        className={`px-3 py-2 text-gray-200 align-middle overflow-hidden ${
+                        className={`px-3 py-2 align-middle overflow-hidden ${
                           numeric ? 'text-right tabular' : ''
                         }`}
                       >
@@ -345,9 +470,15 @@ export default function DataTable({ table }) {
 
       {/* Pagination */}
       {filteredCount > PAGE_SIZE && (
-        <div className="flex items-center justify-between text-xs text-gray-400 shrink-0">
+        <div
+          className="flex items-center justify-between text-xs shrink-0 rounded-md px-3 py-2"
+          style={{ color: 'var(--text-secondary)' }}
+        >
           <span className="tabular">
-            {from}–{to} z {filteredCount.toLocaleString('pl-PL')}
+            <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
+              {from}–{to}
+            </span>{' '}
+            z {filteredCount.toLocaleString('pl-PL')}
           </span>
           <div className="flex items-center gap-1">
             <PageButton
@@ -355,16 +486,19 @@ export default function DataTable({ table }) {
               disabled={!reactTable.getCanPreviousPage()}
               label="Pierwsza strona"
             >
-              «
+              <ChevronsLeftIcon size={14} />
             </PageButton>
             <PageButton
               onClick={() => reactTable.previousPage()}
               disabled={!reactTable.getCanPreviousPage()}
               label="Poprzednia strona"
             >
-              ‹
+              <ChevronLeftIcon size={14} />
             </PageButton>
-            <span className="px-3 tabular text-gray-300">
+            <span
+              className="px-3 tabular"
+              style={{ color: 'var(--text-primary)', fontWeight: 500 }}
+            >
               {pageIndex + 1} / {reactTable.getPageCount()}
             </span>
             <PageButton
@@ -372,14 +506,14 @@ export default function DataTable({ table }) {
               disabled={!reactTable.getCanNextPage()}
               label="Następna strona"
             >
-              ›
+              <ChevronRightIcon size={14} />
             </PageButton>
             <PageButton
               onClick={() => reactTable.setPageIndex(reactTable.getPageCount() - 1)}
               disabled={!reactTable.getCanNextPage()}
               label="Ostatnia strona"
             >
-              »
+              <ChevronsRightIcon size={14} />
             </PageButton>
           </div>
         </div>
@@ -395,7 +529,24 @@ function PageButton({ onClick, disabled, label, children }) {
       disabled={disabled}
       aria-label={label}
       title={label}
-      className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-800 hover:bg-gray-700 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-gray-800 border border-gray-700 hover:border-gray-600 transition-colors leading-none"
+      className="w-8 h-8 flex items-center justify-center rounded-md transition-all"
+      style={{
+        background: '#fff',
+        color: 'var(--text-secondary)',
+        border: '1px solid var(--border)',
+        opacity: disabled ? 0.35 : 1,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+      }}
+      onMouseEnter={e => {
+        if (!disabled) {
+          e.currentTarget.style.borderColor = 'var(--accent)';
+          e.currentTarget.style.color = 'var(--text-primary)';
+        }
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.borderColor = 'var(--border)';
+        e.currentTarget.style.color = 'var(--text-secondary)';
+      }}
     >
       {children}
     </button>
@@ -403,53 +554,65 @@ function PageButton({ onClick, disabled, label, children }) {
 }
 
 const TYPE_META = {
-  string: { glyph: 'Aa', title: 'tekst' },
-  number: { glyph: '123', title: 'liczba' },
-  boolean: { glyph: '0/1', title: 'wartość logiczna' },
-  date: { glyph: 'cal', title: 'data' },
+  string: { Icon: TypeIcon, title: 'tekst' },
+  number: { Icon: HashIcon, title: 'liczba' },
+  boolean: { Icon: ToggleLeftIcon, title: 'wartość logiczna' },
+  date: { Icon: CalendarIcon, title: 'data' },
 };
 
 function TypeBadge({ type }) {
   const meta = TYPE_META[type];
   if (!meta) return null;
+  const { Icon } = meta;
   return (
     <span
       title={meta.title}
-      className="shrink-0 inline-flex items-center justify-center px-1 h-4 min-w-[1.25rem] rounded bg-gray-800 border border-gray-700 text-[9px] font-mono font-medium text-gray-500 normal-case tracking-normal group-hover:text-gray-400"
+      className="shrink-0 inline-flex items-center justify-center w-4 h-4 rounded"
+      style={{
+        background: 'var(--bg-muted)',
+        color: 'var(--text-muted)',
+      }}
     >
-      {meta.glyph}
+      <Icon size={10} strokeWidth={2} />
     </span>
   );
 }
 
 function SortIcon({ dir }) {
+  if (dir === 'asc') return <ArrowUpIcon size={12} className="text-accent-500" style={{ color: 'var(--accent)' }} />;
+  if (dir === 'desc') return <ArrowDownIcon size={12} className="text-accent-500" style={{ color: 'var(--accent)' }} />;
   return (
-    <svg
-      className={`shrink-0 w-3 h-3 transition-opacity ${
-        dir ? 'opacity-100 text-orange-400' : 'opacity-0 group-hover:opacity-50'
-      }`}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      {dir === 'desc' ? (
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-      ) : (
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 15l7-7 7 7" />
-      )}
-    </svg>
+    <ArrowUpDownIcon
+      size={12}
+      className="shrink-0 opacity-0 group-hover:opacity-50 transition-opacity"
+      style={{ color: 'var(--text-muted)' }}
+    />
   );
 }
 
 function ColumnFilter({ column, type }) {
   const value = column.getFilterValue() ?? '';
 
+  const inputStyle = {
+    background: '#fff',
+    border: '1px solid var(--border)',
+    color: 'var(--text-primary)',
+    borderRadius: '6px',
+    padding: '4px 8px',
+    fontSize: '12px',
+    width: '100%',
+    fontFamily: 'inherit',
+  };
+
   if (type === 'boolean') {
     return (
       <select
         value={value}
         onChange={e => column.setFilterValue(e.target.value || undefined)}
-        className="w-full bg-gray-800/80 border border-gray-700 text-gray-300 rounded-md px-1.5 py-1 text-xs font-normal normal-case tracking-normal focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
+        className="focus:outline-none transition-colors"
+        style={inputStyle}
+        onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
+        onBlur={e => (e.currentTarget.style.borderColor = 'var(--border)')}
       >
         <option value="">Wszystkie</option>
         <option value="true">true</option>
@@ -459,11 +622,21 @@ function ColumnFilter({ column, type }) {
   }
 
   return (
-    <input
-      value={value}
-      onChange={e => column.setFilterValue(e.target.value || undefined)}
-      placeholder="Filtruj…"
-      className="w-full bg-gray-800/80 border border-gray-700 text-gray-300 rounded-md px-2 py-1 text-xs font-normal normal-case tracking-normal focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500 placeholder-gray-600"
-    />
+    <div className="relative">
+      <SearchIcon
+        size={12}
+        className="absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none"
+        style={{ color: 'var(--text-muted)' }}
+      />
+      <input
+        value={value}
+        onChange={e => column.setFilterValue(e.target.value || undefined)}
+        placeholder="Filtruj…"
+        className="focus:outline-none transition-colors"
+        style={{ ...inputStyle, paddingLeft: '24px' }}
+        onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
+        onBlur={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+      />
+    </div>
   );
 }
