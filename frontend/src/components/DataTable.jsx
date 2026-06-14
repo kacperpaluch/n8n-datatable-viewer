@@ -94,12 +94,35 @@ export default function DataTable({ table }) {
     [table.columns]
   );
 
+  // Domyślne szerokości kolumn wg typu; kolumny ze stringami wykrytymi jako URL
+  // dostają więcej miejsca, bo adresy są długie. Użytkownik może je dowolnie rozciągnąć.
+  const columnSizes = useMemo(() => {
+    const sizes = {};
+    for (const col of sortedColumns) {
+      if (col.type === 'number') sizes[col.name] = 110;
+      else if (col.type === 'boolean') sizes[col.name] = 90;
+      else if (col.type === 'date') sizes[col.name] = 160;
+      else {
+        const sample = rows
+          .slice(0, 20)
+          .map(r => r[col.name])
+          .filter(v => typeof v === 'string' && v !== '');
+        const urlish =
+          sample.length > 0 &&
+          sample.filter(v => /^https?:\/\//i.test(v)).length > sample.length / 2;
+        sizes[col.name] = urlish ? 380 : 200;
+      }
+    }
+    return sizes;
+  }, [sortedColumns, rows]);
+
   const columns = useMemo(
     () =>
       sortedColumns.map(col => ({
         id: col.name,
         accessorKey: col.name,
         header: col.name,
+        size: columnSizes[col.name],
         meta: { type: col.type },
         enableColumnFilter: true,
         filterFn: (row, columnId, filterValue) => {
@@ -121,7 +144,7 @@ export default function DataTable({ table }) {
           />
         ),
       })),
-    [sortedColumns, savingRow, handleCellChange]
+    [sortedColumns, columnSizes, savingRow, handleCellChange]
   );
 
   const reactTable = useReactTable({
@@ -134,6 +157,8 @@ export default function DataTable({ table }) {
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    columnResizeMode: 'onChange',
+    defaultColumn: { minSize: 80, maxSize: 1200 },
     initialState: { pagination: { pageSize: PAGE_SIZE } },
   });
 
@@ -225,7 +250,10 @@ export default function DataTable({ table }) {
 
       {/* Table */}
       <div className="overflow-auto rounded-lg border border-gray-800 flex-1 bg-gray-950/40">
-        <table className="w-full text-sm border-collapse">
+        <table
+          className="text-sm border-collapse table-fixed min-w-full"
+          style={{ width: reactTable.getTotalSize() }}
+        >
           <thead className="bg-gray-900 sticky top-0 z-10 shadow-header-scroll">
             {reactTable.getHeaderGroups().map(hg => (
               <tr key={hg.id}>
@@ -236,7 +264,8 @@ export default function DataTable({ table }) {
                   return (
                     <th
                       key={header.id}
-                      className="px-3 py-2 border-b border-gray-800 align-top min-w-[120px]"
+                      style={{ width: header.getSize() }}
+                      className="relative px-3 py-2 border-b border-gray-800 align-top"
                     >
                       <button
                         onClick={header.column.getToggleSortingHandler()}
@@ -254,6 +283,19 @@ export default function DataTable({ table }) {
                       <div className="mt-1.5">
                         <ColumnFilter column={header.column} type={colType} />
                       </div>
+                      {header.column.getCanResize() && (
+                        <div
+                          onMouseDown={header.getResizeHandler()}
+                          onTouchStart={header.getResizeHandler()}
+                          onClick={e => e.stopPropagation()}
+                          title="Przeciągnij, aby zmienić szerokość"
+                          className={`absolute top-0 right-0 h-full w-1.5 cursor-col-resize select-none touch-none transition-colors ${
+                            header.column.getIsResizing()
+                              ? 'bg-orange-500'
+                              : 'bg-transparent hover:bg-orange-500/40'
+                          }`}
+                        />
+                      )}
                     </th>
                   );
                 })}
@@ -285,7 +327,8 @@ export default function DataTable({ table }) {
                     return (
                       <td
                         key={cell.id}
-                        className={`px-3 py-2 text-gray-200 align-middle ${
+                        style={{ width: cell.column.getSize() }}
+                        className={`px-3 py-2 text-gray-200 align-middle overflow-hidden ${
                           numeric ? 'text-right tabular' : ''
                         }`}
                       >

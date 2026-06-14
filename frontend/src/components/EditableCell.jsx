@@ -84,6 +84,11 @@ export default function EditableCell({ value, type, onChange, disabled }) {
   const displayValue =
     value === null || value === undefined || value === '' ? null : String(value);
 
+  const isUrl =
+    type === 'string' &&
+    typeof value === 'string' &&
+    /^https?:\/\//i.test(value.trim());
+
   // type="date" przyjmuje tylko YYYY-MM-DD i cicho gubi czas/strefę przy datetime.
   // Picker tylko dla czystych dat; pełne timestampy edytujemy jako tekst (round-trip bez korupcji).
   const isPlainDate = type === 'date' && /^\d{4}-\d{2}-\d{2}$/.test(String(value ?? ''));
@@ -114,11 +119,38 @@ export default function EditableCell({ value, type, onChange, disabled }) {
     );
   }
 
+  // URL: klik w tekst otwiera link w nowej karcie, edycję uruchamia osobny ołówek.
+  if (isUrl) {
+    return (
+      <div className="group/cell flex items-center gap-1 min-h-[24px] py-0.5">
+        <a
+          href={value}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={value}
+          className="truncate min-w-0 flex-1 text-orange-400 hover:text-orange-300 hover:underline transition-colors"
+        >
+          {value}
+        </a>
+        {!disabled && (
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            title="Edytuj"
+            className="shrink-0 p-0.5 rounded-sm text-gray-500 hover:text-gray-200 hover:bg-gray-800 opacity-0 group-hover/cell:opacity-100 focus:opacity-100 transition-all"
+          >
+            <PencilIcon />
+          </button>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div
       onClick={() => !disabled && setEditing(true)}
-      title={disabled ? undefined : 'Kliknij aby edytować'}
-      className={`group/cell relative min-h-[24px] rounded-md px-1.5 -mx-1.5 py-0.5 truncate max-w-[280px] transition-colors ${
+      title={disabled ? undefined : displayValue ?? 'Kliknij aby edytować'}
+      className={`group/cell relative min-h-[24px] rounded-md px-1.5 -mx-1.5 py-0.5 truncate transition-colors ${
         disabled
           ? 'opacity-40 cursor-not-allowed'
           : 'cursor-text hover:bg-gray-800 hover:ring-1 hover:ring-inset hover:ring-gray-700'
@@ -126,20 +158,23 @@ export default function EditableCell({ value, type, onChange, disabled }) {
     >
       {displayValue ?? <span className="text-gray-600 select-none">—</span>}
       {!disabled && (
-        <svg
-          className="absolute right-1 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500 opacity-0 group-hover/cell:opacity-100 transition-opacity bg-gray-800 rounded-sm"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-          />
-        </svg>
+        <span className="absolute right-1 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500 opacity-0 group-hover/cell:opacity-100 transition-opacity bg-gray-800 rounded-sm">
+          <PencilIcon />
+        </span>
       )}
     </div>
+  );
+}
+
+function PencilIcon() {
+  return (
+    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+      />
+    </svg>
   );
 }
