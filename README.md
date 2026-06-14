@@ -9,10 +9,17 @@ Prosty interfejs webowy do przeglądania i edytowania DataTable w n8n.
 - Wybór tabeli z dropdown
 - Sortowanie kolumn (klik w nagłówek)
 - Filtrowanie per-kolumna (tekst lub true/false dla boolean)
-- Edycja inline — klik w komórkę, Enter zatwierdza
+- Edycja inline — klik w komórkę, Enter zatwierdza (z walidacją liczb)
 - Toggle switch dla kolumn `boolean`
 - Paginacja po stronie klienta (50 wierszy/strona)
 - Proxy backend — API key nigdy nie trafia do przeglądarki
+- Healthcheck (`/healthz`) zintegrowany z Docker
+
+## Ograniczenia
+
+- Lista tabel ładowana jest do 250 pozycji; powyżej tej liczby pojawia się ostrzeżenie o obcięciu.
+- Wiersze ładowane są w całości do przeglądarki (do 10 000 na tabelę — powyżej tego progu widok pokazuje ostrzeżenie). Sortowanie i filtry działają na załadowanym zakresie.
+- Kolumny `date` z pełnym znacznikiem czasu (ISO) edytowane są jako tekst, aby uniknąć cichego gubienia czasu/strefy; czyste daty (`YYYY-MM-DD`) używają natywnego pickera.
 
 ## Uruchomienie
 
@@ -38,3 +45,7 @@ Klucz API generujesz w n8n: **Settings → API → Create API Key**
 - **Frontend**: React + Vite + TanStack Table + Tailwind CSS
 - **Backend**: Express.js (proxy do n8n API)
 - **Docker**: multi-stage build, obraz `node:20-alpine`
+
+## Licencja
+
+[MIT](LICENSE)

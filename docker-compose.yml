@@ -7,3 +7,9 @@ services:
       N8N_URL: ${N8N_URL}
       N8N_API_KEY: ${N8N_API_KEY}
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

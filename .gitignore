@@ -14,3 +14,7 @@ backend/public/
 
 # System
 .DS_Store
+
+# Logi i lokalne env
+*.log
+.env.local

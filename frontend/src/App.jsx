@@ -1,20 +1,25 @@
 import { useState, useEffect } from 'react';
 import DataTable from './components/DataTable.jsx';
 
+const TABLES_LIMIT = 250;
+
 export default function App() {
   const [tables, setTables] = useState([]);
   const [selectedTable, setSelectedTable] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [truncated, setTruncated] = useState(false);
 
   useEffect(() => {
-    fetch('/n8n-api/data-tables?limit=100')
+    fetch(`/n8n-api/data-tables?limit=${TABLES_LIMIT}`)
       .then(r => {
         if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
         return r.json();
       })
       .then(data => {
-        setTables(data.data || []);
+        const list = data.data || [];
+        setTables(list);
+        setTruncated(list.length >= TABLES_LIMIT);
         setLoading(false);
       })
       .catch(err => {
@@ -98,7 +103,13 @@ export default function App() {
           </div>
         )}
 
-        {selectedTable && <DataTable table={selectedTable} />}
+        {truncated && !loading && !error && (
+          <div className="mb-3 bg-amber-900/30 border border-amber-700 rounded-lg px-3 py-2 text-amber-300 text-xs">
+            Lista tabel została obcięta do {TABLES_LIMIT} pozycji — niektóre tabele mogą nie być widoczne.
+          </div>
+        )}
+
+        {selectedTable && <DataTable key={selectedTable.id} table={selectedTable} />}
       </main>
     </div>
   );

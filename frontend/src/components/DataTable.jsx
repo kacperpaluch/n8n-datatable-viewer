@@ -10,43 +10,54 @@ import {
 import EditableCell from './EditableCell.jsx';
 
 const PAGE_SIZE = 50;
+const MAX_ROWS = 10000;
 
 export default function DataTable({ table }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [truncated, setTruncated] = useState(false);
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [savingRow, setSavingRow] = useState(null);
   const [saveError, setSaveError] = useState(null);
 
-  const fetchRows = useCallback(async () => {
+  const fetchRows = useCallback(async (signal) => {
     setLoading(true);
     setError(null);
     try {
       const all = [];
       let cursor = null;
+      let wasTruncated = false;
       do {
-        const url = `/n8n-api/data-tables/${table.id}/rows?limit=250${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`;
-        const res = await fetch(url);
+        const url = `/n8n-api/data-tables/${encodeURIComponent(table.id)}/rows?limit=250${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`;
+        const res = await fetch(url, { signal });
         if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         const data = await res.json();
         all.push(...(data.data || []));
         cursor = data.nextCursor || null;
+        if (all.length >= MAX_ROWS && cursor) {
+          wasTruncated = true;
+          break;
+        }
       } while (cursor);
       setRows(all);
+      setTruncated(wasTruncated);
     } catch (err) {
+      if (err.name === 'AbortError') return;
       setError(err.message);
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   }, [table.id]);
 
   useEffect(() => {
-    fetchRows();
+    const controller = new AbortController();
+    fetchRows(controller.signal);
     setSorting([]);
     setColumnFilters([]);
     setSaveError(null);
+    return () => controller.abort();
   }, [fetchRows]);
 
   const handleCellChange = useCallback(
@@ -54,7 +65,7 @@ export default function DataTable({ table }) {
       setSavingRow(rowId);
       setSaveError(null);
       try {
-        const res = await fetch(`/n8n-api/data-tables/${table.id}/rows/update`, {
+        const res = await fetch(`/n8n-api/data-tables/${encodeURIComponent(table.id)}/rows/update`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -174,7 +185,7 @@ export default function DataTable({ table }) {
             </button>
           )}
           <button
-            onClick={fetchRows}
+            onClick={() => fetchRows()}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs rounded-lg border border-gray-700 transition-colors"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -189,6 +200,12 @@ export default function DataTable({ table }) {
           </button>
         </div>
       </div>
+
+      {truncated && (
+        <div className="shrink-0 bg-amber-900/30 border border-amber-700 rounded px-3 py-2 text-amber-300 text-xs">
+          Załadowano pierwsze {MAX_ROWS.toLocaleString('pl-PL')} wierszy — tabela jest większa. Sortowanie i filtry działają tylko na załadowanym zakresie.
+        </div>
+      )}
 
       {saveError && (
         <div className="shrink-0 bg-red-900/30 border border-red-700 rounded px-3 py-2 text-red-300 text-xs flex items-center justify-between">

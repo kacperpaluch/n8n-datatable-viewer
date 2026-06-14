@@ -15,6 +15,10 @@ if (!N8N_URL || !N8N_API_KEY) {
   process.exit(1);
 }
 
+app.get('/healthz', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(

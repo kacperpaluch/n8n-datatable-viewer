@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 export default function EditableCell({ value, type, onChange, disabled }) {
   const [editing, setEditing] = useState(false);
   const [localValue, setLocalValue] = useState(value ?? '');
+  const [invalid, setInvalid] = useState(false);
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -37,23 +38,45 @@ export default function EditableCell({ value, type, onChange, disabled }) {
   }
 
   const commit = () => {
-    setEditing(false);
     const trimmed = typeof localValue === 'string' ? localValue.trim() : localValue;
     const original = value ?? '';
-    if (String(trimmed) === String(original)) return;
-
-    let finalValue = trimmed;
-    if (type === 'number') {
-      const n = Number(trimmed);
-      finalValue = isNaN(n) ? original : n;
+    if (String(trimmed) === String(original)) {
+      setEditing(false);
+      setInvalid(false);
+      return;
     }
-    onChange(finalValue);
+
+    if (type === 'number') {
+      if (trimmed === '') {
+        // Wyczyszczenie liczby = brak wartości, a nie 0
+        setEditing(false);
+        setInvalid(false);
+        onChange(null);
+        return;
+      }
+      const n = Number(trimmed);
+      if (Number.isNaN(n)) {
+        // Nieprawidłowa liczba — sygnalizuj błąd zamiast cicho wysyłać starą wartość
+        setInvalid(true);
+        requestAnimationFrame(() => inputRef.current?.focus());
+        return;
+      }
+      setEditing(false);
+      setInvalid(false);
+      onChange(n);
+      return;
+    }
+
+    setEditing(false);
+    setInvalid(false);
+    onChange(trimmed);
   };
 
   const handleKeyDown = e => {
     if (e.key === 'Enter') inputRef.current?.blur();
     if (e.key === 'Escape') {
       setLocalValue(value ?? '');
+      setInvalid(false);
       setEditing(false);
     }
   };
@@ -61,16 +84,28 @@ export default function EditableCell({ value, type, onChange, disabled }) {
   const displayValue =
     value === null || value === undefined || value === '' ? null : String(value);
 
+  // type="date" przyjmuje tylko YYYY-MM-DD i cicho gubi czas/strefę przy datetime.
+  // Picker tylko dla czystych dat; pełne timestampy edytujemy jako tekst (round-trip bez korupcji).
+  const isPlainDate = type === 'date' && /^\d{4}-\d{2}-\d{2}$/.test(String(value ?? ''));
+  const inputType =
+    type === 'number' ? 'number' : type === 'date' && isPlainDate ? 'date' : 'text';
+
   if (editing) {
     return (
       <input
         ref={inputRef}
         value={localValue}
-        onChange={e => setLocalValue(e.target.value)}
+        onChange={e => {
+          setLocalValue(e.target.value);
+          if (invalid) setInvalid(false);
+        }}
         onBlur={commit}
         onKeyDown={handleKeyDown}
-        type={type === 'number' ? 'number' : type === 'date' ? 'date' : 'text'}
-        className="w-full min-w-[100px] bg-gray-800 border border-orange-500 text-white rounded px-2 py-0.5 text-sm focus:outline-none"
+        type={inputType}
+        title={invalid ? 'Nieprawidłowa liczba' : undefined}
+        className={`w-full min-w-[100px] bg-gray-800 border text-white rounded px-2 py-0.5 text-sm focus:outline-none ${
+          invalid ? 'border-red-500' : 'border-orange-500'
+        }`}
       />
     );
   }
