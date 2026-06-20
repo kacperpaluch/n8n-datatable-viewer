@@ -4,7 +4,6 @@ import {
   DatabaseIcon,
   ChevronDownIcon,
   AlertTriangleIcon,
-  InboxIcon,
   TableIcon,
 } from './components/icons.jsx';
 

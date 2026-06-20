@@ -36,9 +36,6 @@ export const DatabaseIcon = (p) =>
 export const ChevronDownIcon = (p) =>
   base({ ...p, children: <path d="m6 9 6 6 6-6" /> });
 
-export const ChevronUpIcon = (p) =>
-  base({ ...p, children: <path d="m18 15-6-6-6 6" /> });
-
 export const ChevronLeftIcon = (p) =>
   base({ ...p, children: <path d="m15 18-6-6 6-6" /> });
 
@@ -101,8 +98,6 @@ export const SearchIcon = (p) =>
     ),
   });
 
-export const FilterIcon = (p) =>
-  base({ ...p, children: <path d="M3 5h18l-7 9v6l-4-2v-4z" /> });
 
 export const PencilIcon = (p) =>
   base({
@@ -157,17 +152,6 @@ export const ExternalLinkIcon = (p) =>
     ),
   });
 
-export const InboxIcon = (p) =>
-  base({
-    ...p,
-    children: (
-      <>
-        <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
-        <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
-      </>
-    ),
-  });
-
 export const TableIcon = (p) =>
   base({
     ...p,
@@ -178,17 +162,6 @@ export const TableIcon = (p) =>
         <line x1="3" y1="15" x2="21" y2="15" />
         <line x1="9" y1="3" x2="9" y2="21" />
         <line x1="15" y1="3" x2="15" y2="21" />
-      </>
-    ),
-  });
-
-export const CheckCircleIcon = (p) =>
-  base({
-    ...p,
-    children: (
-      <>
-        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-        <polyline points="22 4 12 14.01 9 11.01" />
       </>
     ),
   });

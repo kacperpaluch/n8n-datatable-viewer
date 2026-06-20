@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -24,6 +24,7 @@ import {
   ChevronRightIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
+  ChevronDownIcon,
 } from './icons.jsx';
 
 const PAGE_SIZE = 50;
@@ -36,8 +37,11 @@ export default function DataTable({ table }) {
   const [truncated, setTruncated] = useState(false);
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
+  const [columnVisibility, setColumnVisibility] = useState({});
+  const [showColumnMenu, setShowColumnMenu] = useState(false);
   const [savingRow, setSavingRow] = useState(null);
   const [saveError, setSaveError] = useState(null);
+  const abortRef = useRef(null);
 
   const fetchRows = useCallback(async (signal) => {
     setLoading(true);
@@ -68,19 +72,31 @@ export default function DataTable({ table }) {
     }
   }, [table.id]);
 
-  useEffect(() => {
+  const refresh = useCallback(() => {
+    abortRef.current?.abort();
     const controller = new AbortController();
+    abortRef.current = controller;
     fetchRows(controller.signal);
+  }, [fetchRows]);
+
+  useEffect(() => {
+    refresh();
     setSorting([]);
     setColumnFilters([]);
+    setColumnVisibility({});
+    setShowColumnMenu(false);
     setSaveError(null);
-    return () => controller.abort();
-  }, [fetchRows]);
+    return () => abortRef.current?.abort();
+  }, [refresh]);
 
   const handleCellChange = useCallback(
     async (rowId, columnName, newValue) => {
+      const oldValue = rows.find(r => r.id === rowId)?.[columnName];
       setSavingRow(rowId);
       setSaveError(null);
+      setRows(prev =>
+        prev.map(r => (r.id === rowId ? { ...r, [columnName]: newValue } : r))
+      );
       try {
         const res = await fetch(`/n8n-api/data-tables/${encodeURIComponent(table.id)}/rows/update`, {
           method: 'PATCH',
@@ -94,16 +110,16 @@ export default function DataTable({ table }) {
           }),
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-        setRows(prev =>
-          prev.map(r => (r.id === rowId ? { ...r, [columnName]: newValue } : r))
-        );
       } catch (err) {
+        setRows(prev =>
+          prev.map(r => (r.id === rowId ? { ...r, [columnName]: oldValue } : r))
+        );
         setSaveError(`Zapis nie powiódł się: ${err.message}`);
       } finally {
         setSavingRow(null);
       }
     },
-    [table.id]
+    [table.id, rows]
   );
 
   const sortedColumns = useMemo(
@@ -165,9 +181,10 @@ export default function DataTable({ table }) {
   const reactTable = useReactTable({
     data: rows,
     columns,
-    state: { sorting, columnFilters },
+    state: { sorting, columnFilters, columnVisibility },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -259,7 +276,7 @@ export default function DataTable({ table }) {
               style={{
                 background: 'var(--accent-light)',
                 color: 'var(--accent)',
-                border: '1px solid var(--accent-200, #d8eec6)',
+                border: '1px solid #d8eec6',
               }}
               onMouseEnter={e => (e.currentTarget.style.background = '#e3f1d2')}
               onMouseLeave={e => (e.currentTarget.style.background = 'var(--accent-light)')}
@@ -267,8 +284,68 @@ export default function DataTable({ table }) {
               Wyczyść filtry
             </button>
           )}
+          <div className="relative">
+            <button
+              onClick={() => setShowColumnMenu(v => !v)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all"
+              style={{
+                background: '#fff',
+                color: 'var(--text-secondary)',
+                border: '1px solid var(--border)',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = 'var(--accent)';
+                e.currentTarget.style.color = 'var(--text-primary)';
+              }}
+              onMouseLeave={e => {
+                if (!showColumnMenu) {
+                  e.currentTarget.style.borderColor = 'var(--border)';
+                  e.currentTarget.style.color = 'var(--text-secondary)';
+                }
+              }}
+            >
+              Kolumny
+              <ChevronDownIcon size={14} />
+            </button>
+            {showColumnMenu && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowColumnMenu(false)}
+                />
+                <div
+                  className="absolute right-0 top-full mt-1 z-50 rounded-lg py-1 max-h-80 overflow-auto"
+                  style={{
+                    background: '#fff',
+                    border: '1px solid var(--border)',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.10)',
+                    minWidth: '200px',
+                  }}
+                >
+                  {sortedColumns.map(col => (
+                    <label
+                      key={col.name}
+                      className="flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer transition-colors"
+                      style={{ color: 'var(--text-primary)' }}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-muted)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={reactTable.getColumn(col.name)?.getIsVisible() ?? true}
+                        onChange={() => reactTable.getColumn(col.name)?.toggleVisibility()}
+                        className="accent-[#5ea832]"
+                        style={{ accentColor: 'var(--accent)' }}
+                      />
+                      <span className="truncate">{col.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
           <button
-            onClick={() => fetchRows()}
+            onClick={() => refresh()}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all"
             style={{
               background: 'var(--text-primary)',
@@ -579,8 +656,8 @@ function TypeBadge({ type }) {
 }
 
 function SortIcon({ dir }) {
-  if (dir === 'asc') return <ArrowUpIcon size={12} className="text-accent-500" style={{ color: 'var(--accent)' }} />;
-  if (dir === 'desc') return <ArrowDownIcon size={12} className="text-accent-500" style={{ color: 'var(--accent)' }} />;
+  if (dir === 'asc') return <ArrowUpIcon size={12} style={{ color: 'var(--accent)' }} />;
+  if (dir === 'desc') return <ArrowDownIcon size={12} style={{ color: 'var(--accent)' }} />;
   return (
     <ArrowUpDownIcon
       size={12}

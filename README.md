@@ -10,10 +10,12 @@ Prosty interfejs webowy do przeglądania i edytowania DataTable w n8n.
 - Sortowanie kolumn (klik w nagłówek)
 - Filtrowanie per-kolumna (tekst lub true/false dla boolean)
 - Edycja inline — klik w komórkę, Enter zatwierdza (z walidacją liczb)
+- Ukrywanie/pokazywanie kolumn (przycisk "Kolumny" w toolbarze)
 - Zmiana szerokości kolumn przeciągnięciem krawędzi nagłówka
 - Klikalne URL-e — otwierają się w nowej karcie, edycja przez ikonę ołówka
 - Toggle switch dla kolumn `boolean`
 - Paginacja po stronie klienta (50 wierszy/strona)
+- Optymistyczny zapis z rollbackiem przy błędzie
 - Proxy backend — API key nigdy nie trafia do przeglądarki
 - Healthcheck (`/healthz`) zintegrowany z Docker
 
