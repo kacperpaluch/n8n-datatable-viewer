@@ -25,12 +25,13 @@ import {
   ChevronsLeftIcon,
   ChevronsRightIcon,
   ChevronDownIcon,
+  ZapIcon,
 } from './icons.jsx';
 
 const PAGE_SIZE = 50;
 const MAX_ROWS = 10000;
 
-export default function DataTable({ table }) {
+export default function DataTable({ table, hasWebhook = false }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -41,7 +42,10 @@ export default function DataTable({ table }) {
   const [showColumnMenu, setShowColumnMenu] = useState(false);
   const [savingRow, setSavingRow] = useState(null);
   const [saveError, setSaveError] = useState(null);
+  const [webhookBusy, setWebhookBusy] = useState(false);
+  const [webhookNotice, setWebhookNotice] = useState(null); // {type: 'ok'|'err', msg}
   const abortRef = useRef(null);
+  const webhookNoticeTimer = useRef(null);
 
   const fetchRows = useCallback(async (signal) => {
     setLoading(true);
@@ -78,6 +82,28 @@ export default function DataTable({ table }) {
     abortRef.current = controller;
     fetchRows(controller.signal);
   }, [fetchRows]);
+
+  const triggerWebhook = useCallback(async () => {
+    setWebhookBusy(true);
+    setWebhookNotice(null);
+    try {
+      const res = await fetch(`/trigger-webhook/${encodeURIComponent(table.name)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      setWebhookNotice({ type: 'ok', msg: `Webhook wykonany: ${data.body?.status || 'ok'}` });
+      refresh();
+    } catch (err) {
+      setWebhookNotice({ type: 'err', msg: `Webhook nie powiódł się: ${err.message}` });
+    } finally {
+      setWebhookBusy(false);
+      if (webhookNoticeTimer.current) clearTimeout(webhookNoticeTimer.current);
+      webhookNoticeTimer.current = setTimeout(() => setWebhookNotice(null), 6000);
+    }
+  }, [table.name, refresh]);
 
   useEffect(() => {
     refresh();
@@ -344,6 +370,37 @@ export default function DataTable({ table }) {
               </>
             )}
           </div>
+          {hasWebhook && (
+            <button
+              onClick={triggerWebhook}
+              disabled={webhookBusy}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all"
+              style={{
+                background: webhookBusy ? 'var(--accent-light)' : '#fff',
+                color: 'var(--accent)',
+                border: '1px solid #d8eec6',
+                opacity: webhookBusy ? 0.7 : 1,
+                cursor: webhookBusy ? 'wait' : 'pointer',
+              }}
+              onMouseEnter={e => {
+                if (!webhookBusy) e.currentTarget.style.background = 'var(--accent-light)';
+              }}
+              onMouseLeave={e => {
+                if (!webhookBusy) e.currentTarget.style.background = '#fff';
+              }}
+              title="Uruchom workflow n8n przez webhook"
+            >
+              {webhookBusy ? (
+                <div
+                  className="w-3.5 h-3.5 border-2 border-t-transparent rounded-full animate-spin"
+                  style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }}
+                />
+              ) : (
+                <ZapIcon size={14} strokeWidth={2} />
+              )}
+              n8n webhook
+            </button>
+          )}
           <button
             onClick={() => refresh()}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all"
@@ -366,6 +423,22 @@ export default function DataTable({ table }) {
           </button>
         </div>
       </div>
+
+      {webhookNotice && (
+        <div
+          className="shrink-0 rounded-md px-3 py-2 text-xs flex items-center gap-2"
+          style={{
+            background: webhookNotice.type === 'ok' ? '#f0fdf4' : '#fef2f2',
+            border: `1px solid ${webhookNotice.type === 'ok' ? '#bbf7d0' : '#fecaca'}`,
+            color: webhookNotice.type === 'ok' ? '#166534' : '#991b1b',
+          }}
+        >
+          <button onClick={() => setWebhookNotice(null)} className="hover:opacity-70" aria-label="Zamknij">
+            <XIcon size={14} />
+          </button>
+          <span>{webhookNotice.msg}</span>
+        </div>
+      )}
 
       {truncated && (
         <div

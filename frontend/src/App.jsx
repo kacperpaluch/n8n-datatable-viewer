@@ -9,6 +9,8 @@ import {
 
 const TABLES_LIMIT = 250;
 
+const DEFAULT_TABLE_KEY = 'n8n-dtv:defaultTable';
+
 export default function App() {
   const [tables, setTables] = useState([]);
   const [selectedTable, setSelectedTable] = useState(null);
@@ -16,24 +18,38 @@ export default function App() {
   const [error, setError] = useState(null);
   const [truncated, setTruncated] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [webhookTables, setWebhookTables] = useState([]);
 
   useEffect(() => {
-    fetch(`/n8n-api/data-tables?limit=${TABLES_LIMIT}`)
-      .then(r => {
+    Promise.all([
+      fetch(`/n8n-api/data-tables?limit=${TABLES_LIMIT}`).then(r => {
         if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
         return r.json();
-      })
-      .then(data => {
+      }),
+      fetch('/webhooks').then(r => r.ok ? r.json() : { tables: [] }).catch(() => ({ tables: [] })),
+    ])
+      .then(([data, wh]) => {
         const list = data.data || [];
         setTables(list);
         setTruncated(list.length >= TABLES_LIMIT);
+        setWebhookTables(wh.tables || []);
         setLoading(false);
+        // Restore default selection — localStorage first, else nothing selected
+        const savedId = localStorage.getItem(DEFAULT_TABLE_KEY);
+        const found = savedId && list.find(t => t.id === savedId);
+        if (found) setSelectedTable(found);
       })
       .catch(err => {
         setError(err.message);
         setLoading(false);
       });
   }, []);
+
+  const selectTable = (table) => {
+    setSelectedTable(table);
+    if (table) localStorage.setItem(DEFAULT_TABLE_KEY, table.id);
+    else localStorage.removeItem(DEFAULT_TABLE_KEY);
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -100,7 +116,7 @@ export default function App() {
                     }}
                     value={selectedTable?.id || ''}
                     onChange={e =>
-                      setSelectedTable(tables.find(t => t.id === e.target.value) || null)
+                      selectTable(tables.find(t => t.id === e.target.value) || null)
                     }
                     onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
                     onBlur={e => (e.currentTarget.style.borderColor = 'var(--border)')}
@@ -208,7 +224,13 @@ export default function App() {
           </div>
         )}
 
-        {selectedTable && <DataTable key={selectedTable.id} table={selectedTable} />}
+        {selectedTable && (
+          <DataTable
+            key={selectedTable.id}
+            table={selectedTable}
+            hasWebhook={webhookTables.includes(selectedTable.name)}
+          />
+        )}
       </main>
     </div>
   );

@@ -7,6 +7,8 @@ Prosty interfejs webowy do przeglądania i edytowania DataTable w n8n.
 ## Funkcje
 
 - Wybór tabeli z dropdown
+- Zapamiętanie ostatnio wybranej tabeli (localStorage) — otwiera się automatycznie na starcie
+- Przycisk "n8n webhook" w toolbarze (opcjonalny, konfigurowalny per tabela) — wyzwala workflow n8n, po odpowiedzi tabela odświeża się sama
 - Sortowanie kolumn (klik w nagłówek)
 - Filtrowanie per-kolumna (tekst lub true/false dla boolean)
 - Edycja inline — klik w komórkę, Enter zatwierdza (z walidacją liczb)
@@ -31,11 +33,23 @@ Obraz dostępny na [Docker Hub](https://hub.docker.com/r/kpa90/n8n-datatable-vie
 
 ```bash
 cp .env.example .env
-# Uzupełnij N8N_URL i N8N_API_KEY w .env
+# Uzupełnij N8N_URL, N8N_API_KEY i (opcjonalnie) WEBHOOKS w .env
 docker compose up -d
 ```
 
 Aplikacja dostępna na **http://localhost:3000**
+
+### Przycisk "n8n webhook" (opcjonalny)
+
+Aby w toolbarze tabeli pojawił się przycisk wyzwalający workflow n8n przez webhook, dodaj do env var `WEBHOOKS` mapowanie: nazwa tabeli (`name` z API n8n) → ścieżka webhooka (UUID z n8n, bez domeny). Backend trzyma sekret — przeglądarka widzi tylko listę nazw.
+
+Przykład dla tabeli `ang_anki` i webhooka n8n o ścieżce `0e0c3430-0edb-4e78-bf24-faaeb99f3b48`:
+
+```json
+WEBHOOKS={"ang_anki":"0e0c3430-0edb-4e78-bf24-faaeb99f3b48"}
+```
+
+W Portainerze: zakładka **Container → Env** → dodaj zmienną `WEBHOOKS` z wartością `{"ang_anki":"0e0c3430-..."}` (jako string). Po kliknięciu przycisku ⚡ w toolbarze dashboard woła backend, który przekazuje POST do n8n; po odpowiedzi tabela odświeża się sama.
 
 ## Zmienne środowiskowe
 
@@ -43,6 +57,7 @@ Aplikacja dostępna na **http://localhost:3000**
 |---|---|---|
 | `N8N_URL` | Adres instancji n8n | `https://n8n.example.com` |
 | `N8N_API_KEY` | Klucz API n8n | `eyJhbGci...` |
+| `WEBHOOKS` | JSON: nazwa tabeli → ścieżka webhooka n8n (UUID). Backend trzyma sekret, przeglądarka widzi tylko listę nazw. | `{"ang_anki":"0e0c3430-..."}` |
 
 Klucz API generujesz w n8n: **Settings → API → Create API Key**
 
