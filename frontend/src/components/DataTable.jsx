@@ -32,14 +32,27 @@ import {
 const PAGE_SIZE = 50;
 const MAX_ROWS = 10000;
 
+// Ustawienia widoku zapamiętywane per tabela (tak jak domyślna tabela w App.jsx):
+// widoczność i szerokości kolumn, sortowanie, filtry.
+const viewKey = (id) => `n8n-dtv:view:${id}`;
+const loadView = (id) => {
+  try {
+    return JSON.parse(localStorage.getItem(viewKey(id))) || {};
+  } catch {
+    return {};
+  }
+};
+
 export default function DataTable({ table, hasWebhook = false }) {
+  const saved = useMemo(() => loadView(table.id), [table.id]);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [truncated, setTruncated] = useState(false);
-  const [sorting, setSorting] = useState([]);
-  const [columnFilters, setColumnFilters] = useState([]);
-  const [columnVisibility, setColumnVisibility] = useState({});
+  const [sorting, setSorting] = useState(saved.sorting || []);
+  const [columnFilters, setColumnFilters] = useState(saved.filters || []);
+  const [columnVisibility, setColumnVisibility] = useState(saved.visibility || {});
+  const [columnSizing, setColumnSizing] = useState(saved.sizing || {});
   const [showColumnMenu, setShowColumnMenu] = useState(false);
   const [savingRow, setSavingRow] = useState(null);
   const [saveError, setSaveError] = useState(null);
@@ -122,13 +135,23 @@ export default function DataTable({ table, hasWebhook = false }) {
 
   useEffect(() => {
     refresh();
-    setSorting([]);
-    setColumnFilters([]);
-    setColumnVisibility({});
     setShowColumnMenu(false);
     setSaveError(null);
     return () => abortRef.current?.abort();
   }, [refresh]);
+
+  // Zapamiętaj ustawienia widoku dla tej tabeli.
+  useEffect(() => {
+    localStorage.setItem(
+      viewKey(table.id),
+      JSON.stringify({
+        visibility: columnVisibility,
+        sizing: columnSizing,
+        sorting,
+        filters: columnFilters,
+      })
+    );
+  }, [columnVisibility, columnSizing, sorting, columnFilters, table.id]);
 
   const handleCellChange = useCallback(
     async (rowId, columnName, newValue) => {
@@ -222,10 +245,11 @@ export default function DataTable({ table, hasWebhook = false }) {
   const reactTable = useReactTable({
     data: rows,
     columns,
-    state: { sorting, columnFilters, columnVisibility },
+    state: { sorting, columnFilters, columnVisibility, columnSizing },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
+    onColumnSizingChange: setColumnSizing,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),

@@ -15,6 +15,7 @@ Prosty interfejs webowy do przeglądania i edytowania DataTable w n8n.
 - Edycja inline — klik w komórkę, Enter zatwierdza (z walidacją liczb)
 - Ukrywanie/pokazywanie kolumn (przycisk "Kolumny" w toolbarze)
 - Zmiana szerokości kolumn przeciągnięciem krawędzi nagłówka
+- Zapamiętywanie ustawień widoku per tabela (localStorage) — widoczność i szerokości kolumn, sortowanie oraz filtry odtwarzają się przy ponownym otwarciu tabeli
 - Klikalne URL-e — otwierają się w nowej karcie, edycja przez ikonę ołówka
 - Toggle switch dla kolumn `boolean`
 - Paginacja po stronie klienta (50 wierszy/strona)
