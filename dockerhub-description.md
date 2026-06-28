@@ -1,6 +1,6 @@
 ## n8n DataTable Viewer
 
-Interfejs webowy do przeglądania i edytowania tabel DataTable w n8n. Obsługuje sortowanie, filtrowanie per-kolumna (w tym tryb `true/false` dla boolean), edycję inline i paginację.
+Interfejs webowy do przeglądania i edytowania tabel DataTable w n8n. Obsługuje sortowanie, losową kolejność wierszy ("Pomieszaj"), filtrowanie per-kolumna (w tym tryb `true/false` dla boolean), edycję inline i paginację.
 
 ## Szybki start
 

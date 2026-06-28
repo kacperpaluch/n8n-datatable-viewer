@@ -26,6 +26,7 @@ import {
   ChevronsRightIcon,
   ChevronDownIcon,
   ZapIcon,
+  ShuffleIcon,
 } from './icons.jsx';
 
 const PAGE_SIZE = 50;
@@ -82,6 +83,20 @@ export default function DataTable({ table, hasWebhook = false }) {
     abortRef.current = controller;
     fetchRows(controller.signal);
   }, [fetchRows]);
+
+  // Losowa kolejność wyświetlania (czysto w przeglądarce, bez zapisu do n8n).
+  // Tasuje obecny zbiór wierszy; czyści sortowanie, by układ był widoczny.
+  const shuffleRows = useCallback(() => {
+    setSorting([]);
+    setRows(prev => {
+      const next = prev.slice();
+      for (let i = next.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [next[i], next[j]] = [next[j], next[i]];
+      }
+      return next;
+    });
+  }, []);
 
   const triggerWebhook = useCallback(async () => {
     setWebhookBusy(true);
@@ -370,6 +385,28 @@ export default function DataTable({ table, hasWebhook = false }) {
               </>
             )}
           </div>
+          <button
+            onClick={shuffleRows}
+            disabled={rows.length < 2}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all"
+            style={{
+              background: '#fff',
+              color: 'var(--accent)',
+              border: '1px solid #d8eec6',
+              opacity: rows.length < 2 ? 0.5 : 1,
+              cursor: rows.length < 2 ? 'not-allowed' : 'pointer',
+            }}
+            onMouseEnter={e => {
+              if (rows.length >= 2) e.currentTarget.style.background = 'var(--accent-light)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = '#fff';
+            }}
+            title="Losowa kolejność wierszy (tylko widok, bez zapisu)"
+          >
+            <ShuffleIcon size={14} strokeWidth={2} />
+            Pomieszaj
+          </button>
           {hasWebhook && (
             <button
               onClick={triggerWebhook}

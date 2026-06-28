@@ -10,6 +10,7 @@ Prosty interfejs webowy do przeglądania i edytowania DataTable w n8n.
 - Zapamiętanie ostatnio wybranej tabeli (localStorage) — otwiera się automatycznie na starcie
 - Przycisk "n8n webhook" w toolbarze (opcjonalny, konfigurowalny per tabela) — wyzwala workflow n8n, po odpowiedzi tabela odświeża się sama
 - Sortowanie kolumn (klik w nagłówek)
+- Przycisk "Pomieszaj" — losowa kolejność wierszy (Fisher-Yates) po stronie przeglądarki, bez zapisu do n8n; działa na każdej tabeli
 - Filtrowanie per-kolumna (tekst lub true/false dla boolean)
 - Edycja inline — klik w komórkę, Enter zatwierdza (z walidacją liczb)
 - Ukrywanie/pokazywanie kolumn (przycisk "Kolumny" w toolbarze)

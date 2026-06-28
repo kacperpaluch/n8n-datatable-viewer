@@ -220,3 +220,17 @@ export const ZapIcon = (p) =>
     ...p,
     children: <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" />,
   });
+
+export const ShuffleIcon = (p) =>
+  base({
+    ...p,
+    children: (
+      <>
+        <path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.8-1.1 2-1.7 3.3-1.7H22" />
+        <path d="m18 2 4 4-4 4" />
+        <path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2" />
+        <path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8" />
+        <path d="m18 14 4 4-4 4" />
+      </>
+    ),
+  });
